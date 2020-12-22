@@ -5,6 +5,9 @@ from pprint import pprint
 from pymongo import MongoClient
 import time
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 
 
@@ -39,36 +42,42 @@ elem = driver.find_element_by_name('password')
 elem.send_keys('NextPassword172')
 elem.send_keys(Keys.ENTER)
 cnt = 0
-cnt_mail_page = 0
-print(1)
-time.sleep(10)
-while cnt < 15:
-    print(f"cnt={cnt}")
+links = []
+print(f"cnt={cnt}")
+last_elem = None
+pr_break = None
+while True:
+    time.sleep(4)
     elements = driver.find_elements_by_class_name('llc')
+    if last_elem == elements[-1].get_attribute('href'):
+        break
+    for elem in elements:
+        link = elem.get_attribute('href')
+        last_elem = elem.get_attribute('href')
+        links.append(link)
+        cnt += 1
     actions = ActionChains(driver)
     actions.move_to_element(elements[-1])
     actions.perform()
-    cnt_mail_page = 0
-    print('perform')
-    time.sleep(3)
+print(f"cnt={cnt}")
+links = list(set(links))
 
-    print(elements[cnt].text)
-    elements[cnt].click()
+for l in links:
+    print(l)
+    driver.get(l)
+    time.sleep(5)
     data = {}
-    time.sleep(10)
     data['theme'] = driver.find_element_by_class_name('thread__subject').text
     data['sender'] = driver.find_element_by_class_name('letter__author').text
     data['date'] = driver.find_element_by_class_name('letter__date').text
     data['body'] = driver.find_element_by_class_name('letter-body').text
     print(insert_uniq(data))
-    print('end')
-    driver.back()
-    cnt += 1
-    cnt_mail_page += 1
-    time.sleep(3)
-
-
 driver.close()
 
+
+
+cntm = 0
 for mail in maildb.find():
     pprint(mail)
+    cntm+=1
+print(f"cntm={cntm}")
